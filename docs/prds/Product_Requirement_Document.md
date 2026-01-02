@@ -52,6 +52,14 @@
     *   *Progress Summary:* "Today, [Student] mastered the concept of Friction but struggled with the vocabulary term 'Surface Area'."
     *   *Actionable Suggestions:* "Recommended for tomorrow: Review the 'Rough vs. Smooth' simulation again before starting the Quiz."
 
+### 5.7. ESL Speaking Examiner (AI Roleplay Integration)
+*   **Goal:** Provide realistic speaking practice by generating context-aware persona prompts for external LLM Apps (ChatGPT Live / Gemini Live).
+*   **Workflow:**
+    1.  **Select Content:** Parent/Student selects specific Chapters/Units (incorporating covered Vocabulary, Grammar, and Learning Objects).
+    2.  **Generate Persona:** System calls the internal LLM API to construct a detailed "Teacher Persona" prompt.
+    3.  **Practice:** User activates the external App (ChatGPT/Gemini) and inputs the generated prompt. The AI acts as the Examiner.
+    4.  **Feedback:** The AI Examiner evaluates fluency, vocabulary usage, and grammar, providing a summary at the end.
+
 ### 5.6. User Management System
 *   **Role-Based Access Control (RBAC):**
     *   *Admin:* Create/Delete Parent accounts, configure Global AI Settings.

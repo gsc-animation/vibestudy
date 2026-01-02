@@ -140,6 +140,14 @@ A Serverless Function (Netlify Function) acts as the gateway.
 *   **Processing:** AI extracts and formats to JSON Schema.
 *   **Output:** Ready-to-use content block.
 
+### 5.3. Speaking Prompt Generation Service
+*   **Input:** List of selected Unit IDs.
+*   **Process:**
+    1.  Fetch Unit details (Vocab list, Q&A patterns, Learning Objects) from `JSON_Units`.
+    2.  Construct a Meta-Prompt: "Create a system instruction for an AI to act as a Cambridge Primary Examiner. The student knows [Vocab list]. Focus questions on [Learning Objects]. Check for [Grammar Structures]."
+    3.  Send to Internal LLM (OpenAI/Gemini).
+*   **Output:** A block of text (The System Prompt) displayed to the user for use in ChatGPT Live / Gemini Live.
+
 ## 6. Deployment & CI/CD
 *   **Platform:** Netlify.
 *   **Trigger:** Git commits.
