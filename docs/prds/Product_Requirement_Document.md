@@ -11,7 +11,8 @@
 
 ## 3. Target Audience
 *   **Primary Users (Learners):** Vietnamese Grade 3 students (8-9 years old) studying the Cambridge Primary curriculum. They need engaging, visual, and scaffolded learning experiences.
-*   **Secondary Users (Admins/Facilitators):** Parents or Tutors. They need tools to configure learning paths, track "stuck" points, and customize content without coding skills.
+*   **Secondary Users (Admins/Parents):** Parents or Tutors acting as facilitators. They need tools to configure learning paths, track "stuck" points, and customize content.
+*   **Tertiary Users (System Administrators):** Super-users who manage parent accounts, associate students, and configure global system settings (like AI API keys).
 
 ## 4. Product Vision & Principles
 *   **Data-Driven Education:** Content is decoupled from the application logic, allowing dynamic updates.
@@ -37,10 +38,26 @@
 *   **Sentence Builder:** Drag-and-drop interface to construct scientific conclusions using scaffolded sentence frames (e.g., "The [car] moved [slower] because [surface] was [rough]").
 *   **Text Simplifier (AI):** Toggle to simplify complex text using AI, maintaining key terminology while reducing grammatical complexity.
 
-### 5.4. Parent Admin Portal (CMS)
+### 5.4. Parent Admin Portal (CMS & Analytics)
 *   **Curriculum Management:** Interface to input/edit Unit goals, vocabulary lists, and quiz questions.
+*   **Detailed Performance Analytics:** Deep-dive reporting for every test.
+    *   *Question-Level Breakdown:* Shows exactly which questions were missed (e.g., "Missed 3 questions on 'Magnetic Repulsion'").
+    *   *Trend Analysis:* Visualizes scores over time to identify struggling topics.
 *   **AI Content Converter:** Tool to parse unstructured data (teacher emails, PDFs) into structured JSON content for the app.
-*   **Progress Tracking:** Dashboard showing Formative (Practice) vs. Summative (Test) results.
+
+### 5.5. AI-Powered Daily Summary & Suggestions
+*   **Daily Digest:** Parents can select an "AI Summary" activity for each day.
+*   **Multi-LLM Support:** Configurable system backend to switch between **OpenAI Compatible APIs** and **Google Generative AI** endpoints.
+*   **Intelligent Insights:**
+    *   *Progress Summary:* "Today, [Student] mastered the concept of Friction but struggled with the vocabulary term 'Surface Area'."
+    *   *Actionable Suggestions:* "Recommended for tomorrow: Review the 'Rough vs. Smooth' simulation again before starting the Quiz."
+
+### 5.6. User Management System
+*   **Role-Based Access Control (RBAC):**
+    *   *Admin:* Create/Delete Parent accounts, configure Global AI Settings.
+    *   *Parent:* Create/Manage Student profiles, customize curriculum.
+    *   *Student:* Access learning interface only.
+*   **Parent-Student Association:** Admins can link specific Parent accounts to one or multiple Student profiles, ensuring data privacy and correct dashboard views.
 
 ## 6. User Journeys
 
@@ -58,8 +75,15 @@
 3.  **Review:** AI generates a vocabulary list and a mini-quiz. Parent approves.
 4.  **Sync:** Content appears in the Student's "Quest Log" for the next Sprint.
 
+### 6.3. The Parent's "Daily Review"
+1.  **Check-in:** Parent logs into the portal in the evening.
+2.  **AI Summary:** Clicks "Generate Daily Report". System queries the configured LLM (OpenAI/Google).
+3.  **Insight:** Parent reads: "Student spent 15 mins on 'Friction' but failed the quiz twice. Suggest reviewing tomorrow."
+4.  **Action:** Parent drags the "Review Friction" card from "Done" back to "To Do" on the kid's board.
+
 ## 7. Success Metrics
 *   **Vocabulary Retention:** Improvement in Tier 3 vocabulary recall (measured via spaced repetition stats).
 *   **Task Completion Rate:** % of planned Kanban tasks moved to "Done" weekly.
 *   **Engagement:** Average time spent in "Virtual Labs".
 *   **Parent Satisfaction:** Ease of content update and perceived reduction in "wasted weeks".
+*   **AI Efficacy:** Relevance rating of daily suggestions as marked by parents.

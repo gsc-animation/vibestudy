@@ -6,21 +6,25 @@ The VibeStudy platform utilizes a **Jamstack** architecture (JavaScript, APIs, M
 ### Key Technology Stack
 *   **Frontend:** ReactJS (SPA)
 *   **Content Management:** Decap CMS (formerly Netlify CMS)
-*   **Database:** Local JSON Files (Content) & LocalStorage (User Progress)
+*   **Database:** Local JSON Files (Content), LocalStorage (User Progress)
+*   **Identity & User Mgmt:** Netlify Identity (RBAC: Admin, Parent, Student)
 *   **Hosting/CI/CD:** Netlify
-*   **AI Integration:** OpenAI API (for content generation/transformation)
+*   **AI Integration:** Multi-Provider Support (Configurable)
+    *   **OpenAI Compatible API** (e.g., GPT-4, Local LLMs)
+    *   **Google Generative AI** (Gemini Pro)
 *   **Text-to-Speech:** Web Speech API / `react-speech-kit`
 
 ## 2. Architecture Diagram
 ```mermaid
 graph TD
     User[Student] -->|Interacts| ReactApp[ReactJS Application]
-    Admin[Parent] -->|Manages| CMS[Decap CMS]
+    Parent[Parent] -->|Manages| CMS[Decap CMS / Admin Panel]
+    SysAdmin[System Admin] -->|Configures| AuthConfig[Netlify Identity & Env Vars]
     
     subgraph "Data Layer (Git Repository)"
         JSON_Vocab[Vocabulary JSON]
         JSON_Units[Curriculum Units JSON]
-        JSON_Game[Game Config JSON]
+        JSON_Users[User Association JSON]
     end
 
     subgraph "Local Client"
@@ -29,11 +33,13 @@ graph TD
     end
 
     CMS -->|Commits| JSON_Units
-    CMS -->|Commits| JSON_Vocab
+    CMS -->|Commits| JSON_Users
     
-    subgraph "AI Services"
-        Admin -->|Uploads PDF/Text| AIPipeline[AI Content Processor]
-        AIPipeline -->|Generates| JSON_Drafts[JSON Drafts]
+    subgraph "AI Services (Serverless Functions)"
+        Parent -->|Request Summary| AIService[AI Service Adapter]
+        AIService -->|Queries| OpenAI[OpenAI API]
+        AIService -->|Queries| GoogleAI[Google Gemini API]
+        AIService -->|Returns| Summary[Daily Report & Suggestions]
     end
     
     JSON_Drafts -->|Import| CMS
@@ -82,41 +88,63 @@ The application logic is generic "Engines" that render content based on strict J
 }
 ```
 
+### 3.4. User & Role Association Schema
+Stored in a secure/restricted path (e.g., `/_config/users.json`) or managed via Identity Metadata.
+```json
+{
+  "users": [
+    {
+      "id": "usr_parent_01",
+      "email": "parent@example.com",
+      "role": "parent",
+      "associated_students": ["stu_01_tommy"]
+    },
+    {
+      "id": "stu_01_tommy",
+      "display_name": "Tommy",
+      "role": "student",
+      "grade": 3
+    }
+  ]
+}
+```
+
 ## 4. Frontend Implementation Details
 
 ### 4.1. Component Structure
+*   **`src/components/Admin/`**: 
+    *   `UserManagement.jsx`: Admin view to create parents/students.
+    *   `PerformanceReport.jsx`: Detailed charts (Recharts/Chart.js) for test analysis.
 *   **`src/components/GameEngines/`**: Contains generic logic for different activity types.
-    *   `MatchingGame.jsx`: Renders a matching game based on any key-value pair input.
-    *   `VirtualLab.jsx`: A wrapper for interactive simulations (Canvas/WebGL).
-    *   `QuizBuilder.jsx`: Renders multiple-choice or fill-in-the-blank questions.
 *   **`src/components/Dashboard/`**:
     *   `KanbanBoard.jsx`: Manages the drag-and-drop state of tasks.
-    *   `SprintWizard.jsx`: Interface for selecting weekly tasks.
+    *   `DailySummary.jsx`: Fetches and displays the AI-generated insight.
 
 ### 4.2. State Management
-*   **Content State:** Static, fetched from JSON files at build time or runtime.
-*   **User State (Progress):** Persisted in `LocalStorage` to ensure privacy and offline capability.
-    *   Structure: `{ "completed_tasks": [], "quiz_scores": {}, "xp_points": 150 }`
-*   **Backup:** Feature to export `LocalStorage` data to a JSON file for backup/transfer.
+*   **Content State:** Static, fetched from JSON files.
+*   **User State (Progress):** Persisted in `LocalStorage`.
+*   **Analytics State:** Detailed test logs (timestamp, question_id, chosen_answer, correct_answer) are stored in `LocalStorage` and optionally synced to a secure endpoint for the Parent Dashboard.
 
-## 5. AI Content Pipeline
-To solve the "unstructured data" problem for parents:
-1.  **Input:** Parent pastes text (email from teacher) or uploads an image (homework sheet).
-2.  **Processing:** 
-    *   **LLM Prompting:** System uses a predefined "System Prompt" to act as an Educational Data Architect.
-    *   **Extraction:** Extracts keywords, definitions, and quiz questions.
-    *   **Formatting:** Converts extracted data into the valid JSON Schema defined in Section 3.
-3.  **Output:** JSON block is presented to the parent to copy-paste into Decap CMS (or auto-imported if API integration allows).
+## 5. AI Content & Summary Pipeline
+To support configurable AI providers:
+
+### 5.1. The AI Adapter Pattern
+A Serverless Function (Netlify Function) acts as the gateway.
+*   **Config:** Environment variables set the active provider (`AI_PROVIDER=OPENAI` or `AI_PROVIDER=GOOGLE`).
+*   **Input:** JSON of student's daily logs (Tasks completed, Quiz scores).
+*   **System Prompt:** "You are an educational assistant. Analyze the student's logs. Identify weak points. Suggest 1 specific review task."
+*   **Output:** JSON `{ "summary": "...", "suggestion": "...", "sentiment": "positive" }`.
+
+### 5.2. Content Generation
+*   **Input:** Parent pastes text.
+*   **Processing:** AI extracts and formats to JSON Schema.
+*   **Output:** Ready-to-use content block.
 
 ## 6. Deployment & CI/CD
 *   **Platform:** Netlify.
-*   **Trigger:** Any commit to the Git repository (via CMS or Code) triggers a build.
-*   **Build Process:** 
-    1.  Validate JSON Schemas.
-    2.  Build React Application.
-    3.  Optimize Assets.
-    4.  Deploy to CDN.
+*   **Trigger:** Git commits.
+*   **Security:** API Keys for OpenAI/Google are stored as encrypted Environment Variables in Netlify, never exposed to the client.
 
 ## 7. Security & Privacy
-*   **No PII on Server:** Student data resides solely on their device (LocalStorage).
-*   **Authentication:** Decap CMS uses Netlify Identity to ensure only authorized parents can edit the curriculum content.
+*   **No PII on Server:** Student data resides on device or encrypted backups.
+*   **RBAC:** Netlify Identity JWTs enforce role boundaries. Only 'Admin' role can access the User Management view.

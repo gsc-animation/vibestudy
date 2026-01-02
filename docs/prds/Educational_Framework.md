@@ -55,12 +55,15 @@ Teaching executive function and self-regulation through managed workflows.
 *   **Limit Work in Progress (WIP):** The "Doing" column only allows **one** task at a time. This prevents multitasking and cognitive overload.
 *   **Visual Progress:** Moving a task to "Done" triggers a dopamine-rewarding animation.
 
-### 4.3. Retrospective (Metacognition)
-*   At the end of the week, a "Retro Wizard" asks:
+### 4.3. Retrospective (Metacognition) & AI Insights
+*   **The Student's Voice:** At the end of the week, a "Retro Wizard" asks:
     1.  *What went well?* (Celebrate)
-    2.  *Where did I get stuck?* (Identify Blockers - e.g., "Too many new words")
+    2.  *Where did I get stuck?* (Identify Blockers)
     3.  *Plan for next week.* (Adapt)
-*   This aligns with the scientific method's "Evaluation" phase.
+*   **The AI Scrum Master:**
+    *   Parents receive an AI-generated synthesis of these reflections combined with performance data.
+    *   *Example:* "Your child felt confident in 'Magnets' but marked 'Friction' as a blocker. The test data confirms this with a 60% score on Friction questions. **Action:** Review the 'Surface Area' simulation."
+    *   This bridges the gap between raw data and pedagogical action.
 
 ## 5. Summary Table: Methodology to Feature Mapping
 
@@ -71,3 +74,4 @@ Teaching executive function and self-regulation through managed workflows.
 | **VRA (Virtual)** | Physics Engine Simulations | Makes abstract forces (friction, magnetism) visible and tangible. |
 | **Agile (Self-Regulation)** | Kid-Kanban Board with WIP Limits | Teaches focus and task management; reduces overwhelm. |
 | **Scaffolding (ZPD)** | AI Text Simplifier | Allows students to access complex content within their Zone of Proximal Development. |
+| **Metacognition (Retro)** | AI Daily/Weekly Summary | Translates student feelings and scores into actionable parenting advice. |
