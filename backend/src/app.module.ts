@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseModule } from './database/database.module';
 import { QuestsModule } from './quests/quests.module';
+import { ExperimentsModule } from './experiments/experiments.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { QuestsModule } from './quests/quests.module';
     }),
     DatabaseModule,
     QuestsModule,
+    ExperimentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
