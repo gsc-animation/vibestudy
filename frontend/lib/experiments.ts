@@ -91,8 +91,9 @@ export async function updateResult(
 
 /**
  * Experiment phases for the Scientific Method workflow
+ * The 'cloze' phase is for abstract layer learning (fill-in-the-blank exercises)
  */
-export type ExperimentPhase = 'prediction' | 'experiment' | 'observation' | 'complete';
+export type ExperimentPhase = 'prediction' | 'experiment' | 'observation' | 'cloze' | 'complete';
 
 /**
  * Experiment state management helper

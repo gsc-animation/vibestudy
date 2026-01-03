@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, FlaskConical, Settings, RotateCcw, PenTool, BookOpen, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, FlaskConical, Settings, RotateCcw, PenTool, BookOpen, Glasses } from 'lucide-react';
 import { useLab } from '../../contexts/LabContext';
 
 interface LabLayoutProps {
@@ -76,16 +76,17 @@ const LabLayout: React.FC<LabLayoutProps> = ({ children, notebook, title = "Virt
                             <span className="text-xs font-medium">Tools</span>
                         </button>
                         <div className="w-px h-8 bg-slate-700 mx-2" />
-                        <button 
+                        <button
                             onClick={() => setShowOverlay(!showOverlay)}
                             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                                showOverlay 
-                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                showOverlay
+                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                                     : 'hover:bg-slate-700 text-slate-400 hover:text-white'
                             }`}
+                            title="Toggle Force Visualization (Spectacles Mode)"
                         >
-                            {showOverlay ? <Eye size={20} /> : <EyeOff size={20} />}
-                            <span className="text-xs font-medium">Forces</span>
+                            <Glasses size={20} className={showOverlay ? 'animate-pulse' : ''} />
+                            <span className="text-xs font-medium">🔬 Forces</span>
                         </button>
                     </div>
                 </main>

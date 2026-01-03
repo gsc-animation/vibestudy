@@ -2,13 +2,12 @@
 
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import LabLayout from '@/components/lab/LabLayout';
 import LabNotebook from '@/components/lab/LabNotebook';
 import { LabProvider, useLab } from '@/contexts/LabContext';
 import { ExperimentPhase } from '@/lib/experiments';
-import * as Phaser from 'phaser';
+import type * as Phaser from 'phaser';
 
 // Dynamically import PhaserGame to avoid SSR issues
 const PhaserGame = dynamic(() => import('@/components/game/PhaserGame'), {
@@ -21,21 +20,24 @@ const PhaserGame = dynamic(() => import('@/components/game/PhaserGame'), {
 });
 
 interface LabPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 function LabPageContent({ params }: LabPageProps) {
-    const router = useRouter();
+    // Unwrap params using React.use()
+    const unwrappedParams = React.use(params);
+    
     const { data: session } = useSession();
     const { showOverlay } = useLab();
     const [experimentPhase, setExperimentPhase] = useState<ExperimentPhase>('prediction');
+    const [gameConfig, setGameConfig] = useState<Phaser.Types.Core.GameConfig | null>(null);
 
     // In a real app, we would fetch lab details based on params.id
-    const labTitle = `Experiment Lab ${params.id}`;
+    const labTitle = `Experiment Lab ${unwrappedParams.id}`;
     const userId = session?.user?.email || 'demo-user';
-    const questId = params.id;
+    const questId = unwrappedParams.id;
 
     // Handle phase changes from the LabNotebook
     const handlePhaseChange = useCallback((phase: ExperimentPhase) => {
@@ -48,17 +50,20 @@ function LabPageContent({ params }: LabPageProps) {
         // Could show confetti, update achievements, etc.
     }, []);
 
-    // Custom configuration for the lab instance
-    const gameConfig: Phaser.Types.Core.GameConfig = {
-        // We can pass specific scene or physics config here
-        scale: {
-            mode: Phaser.Scale.RESIZE, // Important for filling the flex container
-            width: '100%',
-            height: '100%',
-            autoCenter: Phaser.Scale.NO_CENTER
-        },
-        backgroundColor: '#0f172a' // Match slate-900 roughly
-    };
+    // Initialize game config on client side only
+    React.useEffect(() => {
+        import('phaser').then((PhaserModule) => {
+            setGameConfig({
+                scale: {
+                    mode: PhaserModule.Scale.RESIZE, // Important for filling the flex container
+                    width: '100%',
+                    height: '100%',
+                    autoCenter: PhaserModule.Scale.NO_CENTER
+                },
+                backgroundColor: '#0f172a' // Match slate-900 roughly
+            });
+        });
+    }, []);
 
     return (
         <LabLayout
@@ -72,10 +77,17 @@ function LabPageContent({ params }: LabPageProps) {
                 />
             }
         >
-            <PhaserGame
-                config={gameConfig}
-                showOverlay={showOverlay}
-            />
+            {gameConfig ? (
+                <PhaserGame
+                    config={gameConfig}
+                    showOverlay={showOverlay}
+                    interactionEnabled={experimentPhase === 'experiment'}
+                />
+            ) : (
+                <div className="flex items-center justify-center w-full h-full text-slate-400">
+                    Initializing Physics Engine...
+                </div>
+            )}
             
             {/* Instruction overlay based on experiment phase */}
             {experimentPhase === 'prediction' && (

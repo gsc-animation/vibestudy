@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { ExperimentsService } from './experiments.service';
 import { CreateExperimentDto } from './dto/create-experiment.dto';
 import { UpdateExperimentDto } from './dto/update-experiment.dto';
@@ -14,7 +14,7 @@ export class ExperimentsController {
   }
 
   @Post('result')
-  async updateResult(@Body() updateExperimentDto: UpdateExperimentDto) {
+  updateResult(@Body() updateExperimentDto: UpdateExperimentDto) {
     return this.experimentsService.updateResult(updateExperimentDto);
   }
 }

@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 import { Quest, QuestSchema } from './schemas/quest.schema';
-import { ExperimentLog, ExperimentLogSchema } from './schemas/experiment-log.schema';
+import {
+  ExperimentLog,
+  ExperimentLogSchema,
+} from './schemas/experiment-log.schema';
 
 @Module({
   imports: [

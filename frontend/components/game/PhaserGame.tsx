@@ -3,15 +3,17 @@
 import React, { useEffect, useRef } from 'react';
 import { BootScene } from './scenes/BootScene';
 import { MagnetsScene } from './scenes/MagnetsScene';
+import { OverlayScene } from './scenes/OverlayScene';
 import * as Phaser from 'phaser';
 
 interface PhaserGameProps {
     config?: Phaser.Types.Core.GameConfig;
     onGameComplete?: () => void;
     showOverlay?: boolean;
+    interactionEnabled?: boolean;
 }
 
-const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOverlay = false }) => {
+const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOverlay = false, interactionEnabled = false }) => {
     const gameRef = useRef<Phaser.Game | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +31,14 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOve
              gameRef.current.registry.set('showOverlay', showOverlay);
         }
     }, [showOverlay]);
+
+    // Emit interaction toggle event when interactionEnabled changes
+    useEffect(() => {
+        if (gameRef.current) {
+            gameRef.current.events.emit('toggle-interaction', interactionEnabled);
+            gameRef.current.registry.set('interactionEnabled', interactionEnabled);
+        }
+    }, [interactionEnabled]);
 
     useEffect(() => {
         if (gameRef.current || !containerRef.current) return;
@@ -50,7 +60,7 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOve
                     // debug: true
                 }
             },
-            scene: [MagnetsScene, BootScene],
+            scene: [MagnetsScene, BootScene, OverlayScene],
             ...config
         };
 
@@ -62,6 +72,7 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOve
         }
         
         gameRef.current.registry.set('showOverlay', showOverlay);
+        gameRef.current.registry.set('interactionEnabled', interactionEnabled);
 
         return () => {
             if (gameRef.current) {
@@ -69,7 +80,8 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOve
                 gameRef.current = null;
             }
         };
-    }, [config]); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config]);
 
     return (
         <div 

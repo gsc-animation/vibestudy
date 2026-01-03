@@ -4,6 +4,7 @@ export class MagnetsScene extends Scene {
     private magnets: Magnet[] = [];
     private graphics!: Phaser.GameObjects.Graphics;
     private showOverlay: boolean = false;
+    private interactionEnabled: boolean = false;
 
     constructor() {
         super('MagnetsScene');
@@ -23,11 +24,21 @@ export class MagnetsScene extends Scene {
 
         // Check initial state from registry
         this.showOverlay = this.registry.get('showOverlay') || false;
+        this.interactionEnabled = this.registry.get('interactionEnabled') || false;
 
         // Listen for overlay toggle
         this.game.events.on('toggle-overlay', (show: boolean) => {
             this.showOverlay = show;
         });
+
+        // Listen for interaction toggle from React (for prediction phase lock)
+        this.game.events.on('toggle-interaction', (enabled: boolean) => {
+            this.interactionEnabled = enabled;
+            this.input.enabled = enabled;
+        });
+
+        // Start with input disabled (prediction phase - enforces Predict → Experiment → Observe loop)
+        this.input.enabled = this.interactionEnabled;
 
         // Create magnets
         const mag1 = new Magnet(this, 300, 300);
@@ -97,6 +108,22 @@ export class MagnetsScene extends Scene {
         if (this.showOverlay) {
             this.drawForceVectors(mag1, mag2);
         }
+
+        // Emit magnet positions for overlay scene
+        this.game.events.emit('magnets-updated', this.getMagnetData());
+    }
+
+    private getMagnetData() {
+        // Return array of { x, y, pole } for each magnet pole
+        const magnetData: { x: number; y: number; pole: 'north' | 'south' }[] = [];
+        
+        this.magnets.forEach(magnet => {
+            const poles = magnet.getPoles();
+            magnetData.push({ x: poles.N.x, y: poles.N.y, pole: 'north' });
+            magnetData.push({ x: poles.S.x, y: poles.S.y, pole: 'south' });
+        });
+        
+        return magnetData;
     }
 
     private drawForceVectors(m1: Magnet, m2: Magnet) {

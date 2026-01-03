@@ -7,7 +7,9 @@ import { Quest, QuestDocument } from '../database/schemas/quest.schema';
 
 @Injectable()
 export class QuestsService {
-  constructor(@InjectModel(Quest.name) private questModel: Model<QuestDocument>) {}
+  constructor(
+    @InjectModel(Quest.name) private questModel: Model<QuestDocument>,
+  ) {}
 
   async create(createQuestDto: CreateQuestDto): Promise<Quest> {
     const createdQuest = new this.questModel(createQuestDto);
@@ -30,11 +32,11 @@ export class QuestsService {
     const updatedQuest = await this.questModel
       .findByIdAndUpdate(id, updateQuestDto, { new: true })
       .exec();
-    
+
     if (!updatedQuest) {
       throw new NotFoundException(`Quest with ID ${id} not found`);
     }
-    
+
     return updatedQuest;
   }
 
@@ -52,11 +54,11 @@ export class QuestsService {
 
   async remove(id: string): Promise<Quest> {
     const deletedQuest = await this.questModel.findByIdAndDelete(id).exec();
-    
+
     if (!deletedQuest) {
       throw new NotFoundException(`Quest with ID ${id} not found`);
     }
-    
+
     return deletedQuest;
   }
 }

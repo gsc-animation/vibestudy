@@ -1,158 +1,243 @@
 # Technical Architecture Document: VibeStudy Platform
 
 ## 1. System Overview
-The VibeStudy platform utilizes a **Jamstack** architecture (JavaScript, APIs, Markup) to deliver a high-performance, secure, and scalable educational application. It decouples the frontend learning interface from the content management system, using **Git-based JSON** as the single source of truth.
+The VibeStudy platform is a modern educational application built with a decoupled architecture separating the frontend learning interface from the backend API services. The system uses a **microservices-inspired** architecture with a NestJS backend API and Next.js frontend.
 
 ### Key Technology Stack
-*   **Frontend:** ReactJS (SPA)
-*   **Content Management:** Decap CMS (formerly Netlify CMS)
-*   **Database:** Local JSON Files (Content), LocalStorage (User Progress)
-*   **Identity & User Mgmt:** Netlify Identity (RBAC: Admin, Parent, Student)
-*   **Hosting/CI/CD:** Netlify
-*   **AI Integration:** Multi-Provider Support (Configurable)
-    *   **OpenAI Compatible API** (e.g., GPT-4, Local LLMs)
-    *   **Google Generative AI** (Gemini Pro)
-*   **Text-to-Speech:** Web Speech API / `react-speech-kit`
+*   **Frontend:** Next.js 16 (React 19 with App Router)
+*   **Backend:** NestJS 11 (Node.js REST API)
+*   **Database:** MongoDB 7 (via Docker Compose)
+*   **Authentication:** NextAuth.js 4 (with MongoDB Adapter)
+*   **UI Framework:** TailwindCSS 4, Lucide Icons
+*   **Drag & Drop:** @dnd-kit (Kanban functionality)
+*   **Game Engine:** Phaser 3 (Virtual lab simulations)
+*   **AI Integration:** OpenAI Compatible API (GPT-4, Local LLMs)
+*   **Container Runtime:** Docker & Docker Compose
+*   **Validation:** Zod (Frontend & Backend)
 
 ## 2. Architecture Diagram
 ```mermaid
 graph TD
-    User[Student] -->|Interacts| ReactApp[ReactJS Application]
-    Parent[Parent] -->|Manages| CMS[Decap CMS / Admin Panel]
-    SysAdmin[System Admin] -->|Configures| AuthConfig[Netlify Identity & Env Vars]
+    User[Student] -->|Interacts| NextApp[Next.js Frontend :3000]
+    Parent[Parent] -->|Manages| NextApp
+    SysAdmin[System Admin] -->|Configures| EnvConfig[Environment Variables]
     
-    subgraph "Data Layer (Git Repository)"
-        JSON_Vocab[Vocabulary JSON]
-        JSON_Units[Curriculum Units JSON]
-        JSON_Users[User Association JSON]
-    end
-
-    subgraph "Local Client"
-        ReactApp -->|Reads/Writes| LocalStore[LocalStorage (Scores/Progress)]
-        ReactApp -->|Fetches| JSON_Vocab
-    end
-
-    CMS -->|Commits| JSON_Units
-    CMS -->|Commits| JSON_Users
-    
-    subgraph "AI Services (Serverless Functions)"
-        Parent -->|Request Summary| AIService[AI Service Adapter]
-        AIService -->|Queries| OpenAI[OpenAI API]
-        AIService -->|Queries| GoogleAI[Google Gemini API]
-        AIService -->|Returns| Summary[Daily Report & Suggestions]
+    subgraph "Docker Services"
+        MongoDB[(MongoDB :27017)]
+        MongoExpress[Mongo Express :8081]
     end
     
-    JSON_Drafts -->|Import| CMS
+    subgraph "Frontend (Next.js 16)"
+        NextApp -->|API Calls| NextAPI[Next.js API Routes]
+        NextApp -->|Auth| NextAuth[NextAuth.js]
+        NextAuth -->|Session Store| MongoDB
+    end
+    
+    subgraph "Backend (NestJS 11)"
+        NestAPI[NestJS API :3001]
+        NestAPI -->|Mongoose ODM| MongoDB
+        NestAPI -->|AI Gateway| OpenAI[OpenAI API]
+    end
+    
+    NextApp -->|REST API| NestAPI
+    MongoExpress -->|Admin| MongoDB
 ```
 
-## 3. Data-Driven Design & JSON Schema
-The application logic is generic "Engines" that render content based on strict JSON Schemas.
+## 3. Service Architecture
 
-### 3.1. Vocabulary Entity
-```json
-{
-  "id": "voc_science_photosynthesis_01",
-  "term": "Photosynthesis",
-  "definition_en": "Process by which plants make food.",
-  "definition_vi": "Quá trình quang hợp.",
-  "audio_src": "/assets/audio/photosynthesis.mp3",
-  "image_src": "/assets/images/photo_diag.png",
-  "tier": 3,
-  "tags": ["biology", "plants"]
+### 3.1. Docker Compose Services
+The development environment is managed via Docker Compose ([`compose.yaml`](../../compose.yaml)):
+
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| `mongodb` | `mongo:7` | 27017 | Primary database for all application data |
+| `mongo-express` | `mongo-express:latest` | 8081 | Web-based MongoDB admin (dev only, profile: admin) |
+
+### 3.2. Application Services
+
+| Service | Port | Technology | Purpose |
+|---------|------|------------|---------|
+| Frontend | 3000 | Next.js 16 | User interface, SSR, Authentication |
+| Backend | 3001 | NestJS 11 | REST API, Business Logic, AI Integration |
+
+## 4. Data Layer
+
+### 4.1. MongoDB Collections
+*   **users**: User accounts and profiles (managed by NextAuth)
+*   **sessions**: Active user sessions (NextAuth adapter)
+*   **accounts**: OAuth provider accounts (NextAuth adapter)
+*   **experiments**: Virtual lab experiment data and results
+*   **quests**: Learning quests/tasks for Kanban board
+*   **predictions**: Student prediction logs for AI analysis
+
+### 4.2. Quest/Task Entity Schema
+```typescript
+interface Quest {
+  _id: ObjectId;
+  title: string;
+  description: string;
+  status: 'todo' | 'in-progress' | 'review' | 'done';
+  assignedTo: ObjectId;
+  priority: 'low' | 'medium' | 'high';
+  dueDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
-### 3.2. Curriculum Unit Entity
-```json
-{
-  "id": "unit_y3_sci_forces",
-  "title": "Forces and Magnets",
-  "week": "Term 1, Week 5",
-  "modules": [
-    { "type": "vocab_list", "refs": ["voc_force_push", "voc_force_pull"] },
-    { "type": "virtual_lab", "config_id": "lab_magnets_01" },
-    { "type": "quiz", "config_id": "quiz_magnets_basic" }
-  ]
+### 4.3. Experiment Entity Schema
+```typescript
+interface Experiment {
+  _id: ObjectId;
+  userId: ObjectId;
+  experimentType: string;
+  configuration: Record<string, any>;
+  predictions: ExperimentPrediction[];
+  results: ExperimentResult[];
+  createdAt: Date;
+  completedAt?: Date;
 }
 ```
 
-### 3.3. Game Configuration (Generic Engine)
-```json
-{
-  "id": "game_match_magnets",
-  "engine": "matching_pairs",
-  "data": [
-    { "left": "North-North", "right": "Repel" },
-    { "left": "North-South", "right": "Attract" }
-  ]
-}
+## 5. Frontend Implementation Details
+
+### 5.1. Directory Structure
+```
+frontend/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx         # Root layout with providers
+│   ├── page.tsx           # Home page
+│   ├── login/             # Authentication pages
+│   ├── dashboard/         # Student dashboard
+│   └── api/               # API routes (NextAuth)
+├── components/
+│   ├── dashboard/         # Kanban board components
+│   │   ├── DashboardLayout.tsx
+│   │   ├── KanbanBoard.tsx
+│   │   ├── KanbanColumn.tsx
+│   │   └── QuestCard.tsx
+│   └── lab/               # Virtual lab components
+├── lib/                   # Utility functions
+└── middleware.ts          # Auth middleware
 ```
 
-### 3.4. User & Role Association Schema
-Stored in a secure/restricted path (e.g., `/_config/users.json`) or managed via Identity Metadata.
-```json
-{
-  "users": [
-    {
-      "id": "usr_parent_01",
-      "email": "parent@example.com",
-      "role": "parent",
-      "associated_students": ["stu_01_tommy"]
-    },
-    {
-      "id": "stu_01_tommy",
-      "display_name": "Tommy",
-      "role": "student",
-      "grade": 3
-    }
-  ]
-}
+### 5.2. State Management
+*   **Server State:** React Server Components, Next.js data fetching
+*   **Client State:** React useState/useContext for UI state
+*   **Authentication:** NextAuth.js session management
+*   **Drag & Drop:** @dnd-kit for Kanban board interactions
+
+## 6. Backend Implementation Details
+
+### 6.1. Directory Structure
+```
+backend/
+├── src/
+│   ├── main.ts              # Application entry point
+│   ├── app.module.ts        # Root module
+│   ├── database/            # MongoDB connection module
+│   │   └── database.module.ts
+│   ├── experiments/         # Experiments feature module
+│   │   ├── experiments.controller.ts
+│   │   ├── experiments.service.ts
+│   │   ├── experiments.module.ts
+│   │   └── dto/
+│   ├── quests/              # Quests feature module
+│   │   ├── quests.controller.ts
+│   │   ├── quests.service.ts
+│   │   └── quests.module.ts
+│   └── ai/                  # AI service integration
+└── test/                    # E2E tests
 ```
 
-## 4. Frontend Implementation Details
+### 6.2. API Endpoints
 
-### 4.1. Component Structure
-*   **`src/components/Admin/`**: 
-    *   `UserManagement.jsx`: Admin view to create parents/students.
-    *   `PerformanceReport.jsx`: Detailed charts (Recharts/Chart.js) for test analysis.
-*   **`src/components/GameEngines/`**: Contains generic logic for different activity types.
-*   **`src/components/Dashboard/`**:
-    *   `KanbanBoard.jsx`: Manages the drag-and-drop state of tasks.
-    *   `DailySummary.jsx`: Fetches and displays the AI-generated insight.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/quests` | List all quests |
+| POST | `/api/quests` | Create a new quest |
+| PATCH | `/api/quests/:id` | Update quest status |
+| DELETE | `/api/quests/:id` | Delete a quest |
+| GET | `/api/experiments` | List experiments |
+| POST | `/api/experiments` | Create experiment |
+| POST | `/api/experiments/:id/predict` | Log prediction |
 
-### 4.2. State Management
-*   **Content State:** Static, fetched from JSON files.
-*   **User State (Progress):** Persisted in `LocalStorage`.
-*   **Analytics State:** Detailed test logs (timestamp, question_id, chosen_answer, correct_answer) are stored in `LocalStorage` and optionally synced to a secure endpoint for the Parent Dashboard.
+## 7. AI Content & Summary Pipeline
 
-## 5. AI Content & Summary Pipeline
-To support configurable AI providers:
+### 7.1. OpenAI Integration
+The backend integrates with OpenAI-compatible APIs for:
+*   **Learning Summaries:** Analyzing student progress and generating insights
+*   **Content Generation:** Creating educational content from prompts
+*   **Prediction Feedback:** Providing feedback on student predictions in virtual labs
 
-### 5.1. The AI Adapter Pattern
-A Serverless Function (Netlify Function) acts as the gateway.
-*   **Config:** Environment variables set the active provider (`AI_PROVIDER=OPENAI` or `AI_PROVIDER=GOOGLE`).
-*   **Input:** JSON of student's daily logs (Tasks completed, Quiz scores).
-*   **System Prompt:** "You are an educational assistant. Analyze the student's logs. Identify weak points. Suggest 1 specific review task."
-*   **Output:** JSON `{ "summary": "...", "suggestion": "...", "sentiment": "positive" }`.
+### 7.2. Configuration
+```env
+# backend/.env
+OPENAI_API_KEY=sk-your-key-here
+# or for local LLMs:
+# OPENAI_API_BASE=http://localhost:1234/v1
+```
 
-### 5.2. Content Generation
-*   **Input:** Parent pastes text.
-*   **Processing:** AI extracts and formats to JSON Schema.
-*   **Output:** Ready-to-use content block.
+## 8. Development Environment Setup
 
-### 5.3. Speaking Prompt Generation Service
-*   **Input:** List of selected Unit IDs.
-*   **Process:**
-    1.  Fetch Unit details (Vocab list, Q&A patterns, Learning Objects) from `JSON_Units`.
-    2.  Construct a Meta-Prompt: "Create a system instruction for an AI to act as a Cambridge Primary Examiner. The student knows [Vocab list]. Focus questions on [Learning Objects]. Check for [Grammar Structures]."
-    3.  Send to Internal LLM (OpenAI/Gemini).
-*   **Output:** A block of text (The System Prompt) displayed to the user for use in ChatGPT Live / Gemini Live.
+### 8.1. Prerequisites
+- Node.js 20+
+- Docker & Docker Compose
+- npm or yarn
 
-## 6. Deployment & CI/CD
-*   **Platform:** Netlify.
-*   **Trigger:** Git commits.
-*   **Security:** API Keys for OpenAI/Google are stored as encrypted Environment Variables in Netlify, never exposed to the client.
+### 8.2. Quick Start
+```bash
+# 1. Start database services
+docker compose up -d
 
-## 7. Security & Privacy
-*   **No PII on Server:** Student data resides on device or encrypted backups.
-*   **RBAC:** Netlify Identity JWTs enforce role boundaries. Only 'Admin' role can access the User Management view.
+# 2. Start backend (in one terminal)
+cd backend && npm install && npm run start:dev
+
+# 3. Start frontend (in another terminal)
+cd frontend && npm install && npm run dev
+```
+
+### 8.3. Environment Variables
+
+**Backend ([`backend/.env`](../../backend/.env)):**
+```env
+MONGO_URI=mongodb://localhost:27017/vibestudy
+PORT=3001
+OPENAI_API_KEY=sk-your-key-here
+```
+
+**Frontend ([`frontend/.env`](../../frontend/.env)):**
+```env
+MONGO_URI=mongodb://localhost:27017/vibestudy
+NEXTAUTH_SECRET=your-secret-here
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### 8.4. Admin Tools
+To start with MongoDB admin interface:
+```bash
+docker compose --profile admin up -d
+# Access at http://localhost:8081 (admin/admin123)
+```
+
+## 9. Deployment Architecture
+
+### 9.1. Production Considerations
+*   **Database:** Use MongoDB Atlas or self-hosted MongoDB with authentication
+*   **Backend:** Deploy NestJS to containerized environment (Docker, Kubernetes)
+*   **Frontend:** Deploy Next.js to Vercel or containerized environment
+*   **Environment:** Use secrets management (Vault, AWS Secrets Manager)
+
+### 9.2. CI/CD Pipeline
+*   **Trigger:** Git commits to main/release branches
+*   **Build:** Docker multi-stage builds for optimized images
+*   **Test:** Run unit and E2E tests before deployment
+*   **Deploy:** Rolling updates with health checks
+
+## 10. Security & Privacy
+*   **Authentication:** NextAuth.js with secure session cookies
+*   **API Security:** JWT tokens for backend API authentication
+*   **CORS:** Configured to allow only frontend origin
+*   **Environment Variables:** Sensitive data stored as environment variables
+*   **Database:** Connection strings never exposed to client
+*   **No PII Exposure:** Student data encrypted and access-controlled

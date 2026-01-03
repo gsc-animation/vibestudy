@@ -3,13 +3,17 @@
 import React, { useState, useCallback } from 'react';
 import { Book, PlayCircle, CheckCircle, ArrowRight, RotateCcw, Loader2 } from 'lucide-react';
 import SentenceBuilder from './SentenceBuilder';
-import { 
-    createPrediction, 
-    updateResult, 
-    ExperimentPhase, 
-    ExperimentState, 
-    initialExperimentState 
+import { ClozeModal } from './ClozeModal';
+import { BadgeUnlockModal } from '@/components/badges/BadgeUnlockModal';
+import { Badge, getBadgeById } from '@/lib/badges';
+import {
+    createPrediction,
+    updateResult,
+    ExperimentPhase,
+    ExperimentState,
+    initialExperimentState
 } from '../../lib/experiments';
+import { ClozeExercise, getExerciseForQuest } from '../../lib/cloze-exercises';
 
 interface LabNotebookProps {
     /** User ID for experiment logging */
@@ -54,6 +58,8 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
     const [state, setState] = useState<ExperimentState>(initialExperimentState);
     const [predictionSentence, setPredictionSentence] = useState<string | null>(null);
     const [observationSentence, setObservationSentence] = useState<string | null>(null);
+    const [currentClozeExercise, setCurrentClozeExercise] = useState<ClozeExercise | null>(null);
+    const [unlockedBadge, setUnlockedBadge] = useState<Badge | null>(null);
 
     const handlePredictionChange = useCallback((sentence: string | null) => {
         setPredictionSentence(sentence);
@@ -109,18 +115,19 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                 observation: observationSentence,
             });
 
+            // Get a cloze exercise for the current quest type
+            const questType = questId.includes('magnet') ? 'magnets' : 'magnets'; // Default to magnets for now
+            const exercise = getExerciseForQuest(questType);
+            setCurrentClozeExercise(exercise || null);
+
             setState(prev => ({
                 ...prev,
-                phase: 'complete',
+                phase: 'cloze',
                 observation: observationSentence,
                 isLoading: false,
             }));
 
-            onPhaseChange?.('complete');
-            onExperimentComplete?.({
-                prediction: state.prediction!,
-                observation: observationSentence,
-            });
+            onPhaseChange?.('cloze');
         } catch (error) {
             setState(prev => ({
                 ...prev,
@@ -130,10 +137,33 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         }
     };
 
+    const handleClozeComplete = () => {
+        setCurrentClozeExercise(null);
+        setState(prev => ({ ...prev, phase: 'complete' }));
+        onPhaseChange?.('complete');
+        onExperimentComplete?.({
+            prediction: state.prediction!,
+            observation: state.observation!,
+        });
+
+        // Check if this is the first experiment and award badge
+        // In a real app, we would check if user already has this badge
+        const firstExpBadge = getBadgeById('first-experiment');
+        if (firstExpBadge) {
+            setUnlockedBadge(firstExpBadge);
+        }
+    };
+
+    const handleClozeSkip = () => {
+        handleClozeComplete();
+    };
+
     const handleReset = () => {
         setState(initialExperimentState);
         setPredictionSentence(null);
         setObservationSentence(null);
+        setCurrentClozeExercise(null);
+        setUnlockedBadge(null);
         onPhaseChange?.('prediction');
     };
 
@@ -142,6 +172,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
             { key: 'prediction', label: 'Predict' },
             { key: 'experiment', label: 'Experiment' },
             { key: 'observation', label: 'Observe' },
+            { key: 'cloze', label: 'Learn' },
             { key: 'complete', label: 'Complete' },
         ];
 
@@ -245,11 +276,11 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     🧪 Experiment in Progress
                 </h3>
                 <p className="text-sm text-purple-700 mb-3">
-                    You predicted: <span className="font-medium italic">"{state.prediction}"</span>
+                    You predicted: <span className="font-medium italic">&quot;{state.prediction}&quot;</span>
                 </p>
                 <p className="text-sm text-purple-700">
                     Now, drag the magnets on the simulation to test your prediction.
-                    When you're ready, click the button below.
+                    When you&apos;re ready, click the button below.
                 </p>
             </div>
 
@@ -259,7 +290,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-all"
             >
                 <CheckCircle size={20} />
-                I've Finished Experimenting
+                I&apos;ve Finished Experimenting
                 <ArrowRight size={16} />
             </button>
         </div>
@@ -309,6 +340,39 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         </div>
     );
 
+    const renderClozePhase = () => (
+        <div className="space-y-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-purple-800 mb-2">
+                    🧠 Scientific Rule Check
+                </h3>
+                <p className="text-sm text-purple-700">
+                    Great observation! Now let&apos;s connect what you saw to the scientific rule.
+                </p>
+            </div>
+
+            {currentClozeExercise && (
+                <ClozeModal
+                    exercise={currentClozeExercise}
+                    onComplete={handleClozeComplete}
+                    onClose={handleClozeSkip}
+                />
+            )}
+
+            {!currentClozeExercise && (
+                <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">No exercise available for this quest type.</p>
+                    <button
+                        onClick={() => handleClozeComplete()}
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700"
+                    >
+                        Continue
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+
     const renderCompletePhase = () => {
         // Check if prediction matched observation
         const predictionMatched = 
@@ -334,12 +398,12 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     <div className="space-y-3">
                         <div className="bg-white/50 rounded p-3">
                             <p className="text-xs font-medium text-slate-500 mb-1">Your Prediction:</p>
-                            <p className="text-sm text-slate-700 italic">"{state.prediction}"</p>
+                            <p className="text-sm text-slate-700 italic">&quot;{state.prediction}&quot;</p>
                         </div>
 
                         <div className="bg-white/50 rounded p-3">
                             <p className="text-xs font-medium text-slate-500 mb-1">Your Observation:</p>
-                            <p className="text-sm text-slate-700 italic">"{state.observation}"</p>
+                            <p className="text-sm text-slate-700 italic">&quot;{state.observation}&quot;</p>
                         </div>
 
                         <p className={`text-sm ${
@@ -372,6 +436,8 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                 return renderExperimentPhase();
             case 'observation':
                 return renderObservationPhase();
+            case 'cloze':
+                return renderClozePhase();
             case 'complete':
                 return renderCompletePhase();
             default:
@@ -403,6 +469,14 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
 
                 {renderCurrentPhase()}
             </div>
+
+            {/* Badge Unlock Modal */}
+            {unlockedBadge && (
+                <BadgeUnlockModal
+                    badge={unlockedBadge}
+                    onClose={() => setUnlockedBadge(null)}
+                />
+            )}
         </div>
     );
 };
