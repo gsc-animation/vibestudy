@@ -8,9 +8,10 @@ import * as Phaser from 'phaser';
 interface PhaserGameProps {
     config?: Phaser.Types.Core.GameConfig;
     onGameComplete?: () => void;
+    showOverlay?: boolean;
 }
 
-const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete }) => {
+const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOverlay = false }) => {
     const gameRef = useRef<Phaser.Game | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +21,14 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete }) => {
             gameRef.current.registry.set('onGameComplete', onGameComplete);
         }
     }, [onGameComplete]);
+
+    // Emit overlay event when showOverlay changes
+    useEffect(() => {
+        if (gameRef.current) {
+             gameRef.current.events.emit('toggle-overlay', showOverlay);
+             gameRef.current.registry.set('showOverlay', showOverlay);
+        }
+    }, [showOverlay]);
 
     useEffect(() => {
         if (gameRef.current || !containerRef.current) return;
@@ -51,6 +60,8 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete }) => {
         if (onGameComplete) {
             gameRef.current.registry.set('onGameComplete', onGameComplete);
         }
+        
+        gameRef.current.registry.set('showOverlay', showOverlay);
 
         return () => {
             if (gameRef.current) {
@@ -58,7 +69,7 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete }) => {
                 gameRef.current = null;
             }
         };
-    }, [config]); // Removed onGameComplete from dependency array to prevent game re-creation
+    }, [config]); 
 
     return (
         <div 

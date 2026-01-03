@@ -14,6 +14,9 @@ export class ExperimentLog {
   @Prop({ required: true })
   prediction_text!: string;
 
+  @Prop()
+  observation_text?: string;
+
   @Prop({ type: MongooseSchema.Types.Mixed })
   result_data: any;
 

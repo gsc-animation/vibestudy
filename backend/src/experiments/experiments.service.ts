@@ -22,14 +22,23 @@ export class ExperimentsService {
   }
 
   async updateResult(updateExperimentDto: UpdateExperimentDto): Promise<ExperimentLogDocument> {
-    const { logId, resultData, reflection } = updateExperimentDto;
+    const { logId, observation, resultData, reflection } = updateExperimentDto;
+    
+    const updateFields: Record<string, unknown> = {};
+    
+    if (observation !== undefined) {
+      updateFields.observation_text = observation;
+    }
+    if (resultData !== undefined) {
+      updateFields.result_data = resultData;
+    }
+    if (reflection !== undefined) {
+      updateFields.reflection_text = reflection;
+    }
     
     const updatedLog = await this.experimentLogModel.findByIdAndUpdate(
       logId,
-      {
-        result_data: resultData,
-        reflection_text: reflection,
-      },
+      updateFields,
       { new: true }
     ).exec();
 

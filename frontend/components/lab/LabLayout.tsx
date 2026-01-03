@@ -2,7 +2,8 @@
 
 import React, { ReactNode, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, FlaskConical, Settings, RotateCcw, PenTool, BookOpen } from 'lucide-react';
+import { ChevronLeft, FlaskConical, Settings, RotateCcw, PenTool, BookOpen, Eye, EyeOff } from 'lucide-react';
+import { useLab } from '../../contexts/LabContext';
 
 interface LabLayoutProps {
     children: ReactNode;
@@ -12,6 +13,7 @@ interface LabLayoutProps {
 
 const LabLayout: React.FC<LabLayoutProps> = ({ children, notebook, title = "Virtual Lab" }) => {
     const [isNotebookOpen, setIsNotebookOpen] = useState(true);
+    const { showOverlay, setShowOverlay } = useLab();
 
     return (
         <div className="flex flex-col h-screen bg-slate-900 text-slate-100 overflow-hidden">
@@ -73,7 +75,18 @@ const LabLayout: React.FC<LabLayoutProps> = ({ children, notebook, title = "Virt
                             <PenTool size={20} />
                             <span className="text-xs font-medium">Tools</span>
                         </button>
-                        {/* Add more tool buttons here later */}
+                        <div className="w-px h-8 bg-slate-700 mx-2" />
+                        <button 
+                            onClick={() => setShowOverlay(!showOverlay)}
+                            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                                showOverlay 
+                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                    : 'hover:bg-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                        >
+                            {showOverlay ? <Eye size={20} /> : <EyeOff size={20} />}
+                            <span className="text-xs font-medium">Forces</span>
+                        </button>
                     </div>
                 </main>
 
