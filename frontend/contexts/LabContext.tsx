@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface LabContextType {
     showOverlay: boolean;
-    setShowOverlay: (show: boolean) => void;
+    setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LabContext = createContext<LabContextType | undefined>(undefined);

@@ -179,47 +179,52 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         const currentIndex = phases.findIndex(p => p.key === state.phase);
 
         return (
-            <div className="flex items-center justify-between px-4 py-3 bg-indigo-50 border-b border-indigo-100">
-                {phases.map((phase, index) => (
-                    <React.Fragment key={phase.key}>
-                        <div className="flex flex-col items-center">
-                            <div
-                                className={`
-                                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                                    ${index < currentIndex
-                                        ? 'bg-green-500 text-white'
-                                        : index === currentIndex
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'bg-slate-200 text-slate-500'
-                                    }
-                                `}
-                            >
-                                {index < currentIndex ? (
-                                    <CheckCircle size={16} />
-                                ) : (
-                                    index + 1
-                                )}
-                            </div>
-                            <span
-                                className={`
-                                    text-xs mt-1 font-medium
-                                    ${index === currentIndex ? 'text-indigo-700' : 'text-slate-500'}
-                                `}
-                            >
-                                {phase.label}
-                            </span>
-                        </div>
-                        {index < phases.length - 1 && (
-                            <div
-                                className={`
-                                    flex-1 h-0.5 mx-2
-                                    ${index < currentIndex ? 'bg-green-500' : 'bg-slate-200'}
-                                `}
-                            />
-                        )}
-                    </React.Fragment>
-                ))}
-            </div>
+            <nav aria-label="Progress Steps" className="px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+                <ol className="flex items-center justify-between m-0 p-0 list-none">
+                    {phases.map((phase, index) => (
+                        <React.Fragment key={phase.key}>
+                            <li className="flex flex-col items-center" aria-current={index === currentIndex ? 'step' : undefined}>
+                                <div
+                                    className={`
+                                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                                        ${index < currentIndex
+                                            ? 'bg-green-500 text-white'
+                                            : index === currentIndex
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-slate-200 text-slate-500'
+                                        }
+                                    `}
+                                    aria-hidden="true"
+                                >
+                                    {index < currentIndex ? (
+                                        <CheckCircle size={16} />
+                                    ) : (
+                                        index + 1
+                                    )}
+                                </div>
+                                <span
+                                    className={`
+                                        text-xs mt-1 font-medium
+                                        ${index === currentIndex ? 'text-indigo-700' : 'text-slate-500'}
+                                    `}
+                                >
+                                    <span className="sr-only">{index < currentIndex ? 'Completed: ' : ''}</span>
+                                    {phase.label}
+                                </span>
+                            </li>
+                            {index < phases.length - 1 && (
+                                <li
+                                    aria-hidden="true"
+                                    className={`
+                                        flex-1 h-0.5 mx-2 list-none
+                                        ${index < currentIndex ? 'bg-green-500' : 'bg-slate-200'}
+                                    `}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </ol>
+            </nav>
         );
     };
 
@@ -227,7 +232,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-blue-800 mb-2">
-                    🔮 Make Your Prediction
+                    <span aria-hidden="true">🔮</span> Make Your Prediction
                 </h3>
                 <p className="text-sm text-blue-700 mb-4">
                     What do you think will happen when the magnets get close to each other?
@@ -260,9 +265,9 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     </>
                 ) : (
                     <>
-                        <PlayCircle size={20} />
+                        <PlayCircle size={20} aria-hidden="true" />
                         Start Experiment
-                        <ArrowRight size={16} />
+                        <ArrowRight size={16} aria-hidden="true" />
                     </>
                 )}
             </button>
@@ -273,7 +278,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         <div className="space-y-4">
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-purple-800 mb-2">
-                    🧪 Experiment in Progress
+                    <span aria-hidden="true">🧪</span> Experiment in Progress
                 </h3>
                 <p className="text-sm text-purple-700 mb-3">
                     You predicted: <span className="font-medium italic">&quot;{state.prediction}&quot;</span>
@@ -332,7 +337,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     </>
                 ) : (
                     <>
-                        <CheckCircle size={20} />
+                        <CheckCircle size={20} aria-hidden="true" />
                         Complete Observation
                     </>
                 )}
@@ -344,7 +349,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         <div className="space-y-4">
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-purple-800 mb-2">
-                    🧠 Scientific Rule Check
+                    <span aria-hidden="true">🧠</span> Scientific Rule Check
                 </h3>
                 <p className="text-sm text-purple-700">
                     Great observation! Now let&apos;s connect what you saw to the scientific rule.
@@ -375,7 +380,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
 
     const renderCompletePhase = () => {
         // Check if prediction matched observation
-        const predictionMatched = 
+        const predictionMatched =
             (state.prediction?.includes('attract') && state.observation?.includes('pulled together')) ||
             (state.prediction?.includes('repel') && state.observation?.includes('pushed apart')) ||
             (state.prediction?.includes('do nothing') && state.observation?.includes('stayed still'));
@@ -384,15 +389,15 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
             <div className="space-y-4">
                 <div className={`
                     border rounded-lg p-4
-                    ${predictionMatched 
-                        ? 'bg-green-50 border-green-200' 
+                    ${predictionMatched
+                        ? 'bg-green-50 border-green-200'
                         : 'bg-amber-50 border-amber-200'
                     }
                 `}>
                     <h3 className={`text-sm font-semibold mb-3 ${
                         predictionMatched ? 'text-green-800' : 'text-amber-800'
                     }`}>
-                        {predictionMatched ? '🎉 Great Job!' : '🤔 Interesting Result!'}
+                        <span aria-hidden="true">{predictionMatched ? '🎉' : '🤔'}</span> {predictionMatched ? 'Great Job!' : 'Interesting Result!'}
                     </h3>
 
                     <div className="space-y-3">
@@ -421,7 +426,7 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg
                         font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition-all"
                 >
-                    <RotateCcw size={20} />
+                    <RotateCcw size={20} aria-hidden="true" />
                     Try Another Experiment
                 </button>
             </div>
@@ -449,20 +454,20 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
         <div className="h-full flex flex-col bg-white border-l border-slate-200 shadow-xl z-20 relative">
             {/* Header */}
             <div className="p-4 bg-indigo-900 text-white flex items-center justify-between">
-                <div className="flex items-center gap-2 font-semibold">
-                    <Book size={20} />
+                <h2 className="flex items-center gap-2 font-semibold text-base m-0">
+                    <Book size={20} aria-hidden="true" />
                     <span>Lab Notebook</span>
-                </div>
+                </h2>
             </div>
 
             {/* Phase Indicator */}
             {renderPhaseIndicator()}
 
             {/* Main Content */}
-            <div className="flex-1 p-4 bg-yellow-50 overflow-y-auto">
+            <div className="flex-1 p-4 bg-yellow-50 overflow-y-auto" role="region" aria-live="polite" aria-label="Current Experiment Step">
                 {/* Error Display */}
                 {state.error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert">
                         <p className="text-sm text-red-700">{state.error}</p>
                     </div>
                 )}

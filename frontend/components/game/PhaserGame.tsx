@@ -92,4 +92,5 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOve
     );
 };
 
-export default PhaserGame;
+// Memoize to prevent unnecessary re-renders that could affect canvas
+export default React.memo(PhaserGame);

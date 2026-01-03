@@ -43,20 +43,26 @@ export default function KanbanColumn({ title, status, count, children }: KanbanC
   const droppableStyle = isOver ? 'ring-2 ring-offset-2 ring-indigo-400 bg-opacity-80' : '';
 
   return (
-    <div 
+    <div
       ref={setNodeRef}
       className={`flex flex-col h-full min-w-[280px] w-full md:w-[280px] rounded-xl border-2 transition-all ${getStatusColor(status).split(' ')[1]} ${droppableStyle}`}
+      role="region"
+      aria-labelledby={`column-title-${status}`}
     >
       {/* Header */}
       <div className={`p-3 rounded-t-lg flex items-center justify-between ${getHeaderColor(status)}`}>
-        <h3 className="font-bold uppercase tracking-wider text-sm">{title}</h3>
-        <span className="bg-white/50 px-2 py-0.5 rounded-full text-xs font-bold">
+        <h3 id={`column-title-${status}`} className="font-bold uppercase tracking-wider text-sm">{title}</h3>
+        <span className="bg-white/50 px-2 py-0.5 rounded-full text-xs font-bold" aria-label={`${count} quests`}>
           {count}
         </span>
       </div>
       
       {/* Content Area */}
-      <div className={`flex-1 p-2 space-y-3 overflow-y-auto ${getStatusColor(status).split(' ')[0]}`}>
+      <div
+        className={`flex-1 p-2 space-y-3 overflow-y-auto ${getStatusColor(status).split(' ')[0]}`}
+        role="list"
+        aria-label={`${title} quests list`}
+      >
         {children}
       </div>
     </div>

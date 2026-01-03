@@ -48,14 +48,14 @@ export default function QuestCard({ quest }: QuestCardProps) {
   const getQuestIcon = (category?: string) => {
     // Determine icon based on category or type
     // This assumes we might pass a category. Defaults to Sword (generic quest).
-    if (!category) return <Sword size={16} />;
+    if (!category) return <Sword size={16} aria-hidden="true" />;
     
     const cat = category.toLowerCase();
-    if (cat.includes('math') || cat.includes('study')) return <Book size={16} />;
-    if (cat.includes('health') || cat.includes('fitness')) return <Shield size={16} />;
-    if (cat.includes('code') || cat.includes('tech')) return <Zap size={16} />;
+    if (cat.includes('math') || cat.includes('study')) return <Book size={16} aria-hidden="true" />;
+    if (cat.includes('health') || cat.includes('fitness')) return <Shield size={16} aria-hidden="true" />;
+    if (cat.includes('code') || cat.includes('tech')) return <Zap size={16} aria-hidden="true" />;
     
-    return <Sword size={16} />;
+    return <Sword size={16} aria-hidden="true" />;
   };
 
   return (
@@ -65,25 +65,36 @@ export default function QuestCard({ quest }: QuestCardProps) {
       {...listeners}
       {...attributes}
       className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing group touch-none"
+      role="article"
+      aria-label={`Quest: ${quest.title}`}
     >
       {/* Card Header: Labels */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex gap-1.5">
-          <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getDifficultyColor(quest.difficulty)}`}>
+          <span
+            className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getDifficultyColor(quest.difficulty)}`}
+            aria-label={`Difficulty: ${quest.difficulty}`}
+          >
             {quest.difficulty}
           </span>
-          <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200">
+          <span
+            className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200"
+            aria-label={`Type: ${quest.type}`}
+          >
             {quest.type}
           </span>
         </div>
-        <button className="text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreHorizontal size={16} />
+        <button
+          className="text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-label="More options"
+        >
+          <MoreHorizontal size={16} aria-hidden="true" />
         </button>
       </div>
 
       {/* Quest Title & Icon */}
       <div className="flex items-start gap-2 mb-3">
-        <div className="mt-0.5 p-1.5 bg-slate-100 text-slate-500 rounded-md">
+        <div className="mt-0.5 p-1.5 bg-slate-100 text-slate-500 rounded-md" aria-hidden="true">
           {getQuestIcon(quest.category)}
         </div>
         <h4 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-2">
@@ -93,13 +104,13 @@ export default function QuestCard({ quest }: QuestCardProps) {
 
       {/* Footer: Rewards & Info */}
       <div className="flex items-center justify-between text-xs text-slate-500 border-t pt-2 mt-2">
-        <div className="flex items-center gap-1 font-medium text-amber-600">
-          <Trophy size={12} />
+        <div className="flex items-center gap-1 font-medium text-amber-600" aria-label={`Reward: ${quest.xp} XP`}>
+          <Trophy size={12} aria-hidden="true" />
           <span>{quest.xp} XP</span>
         </div>
         {/* Placeholder for due date or other meta info */}
-        <div className="flex items-center gap-1">
-          <Clock size={12} />
+        <div className="flex items-center gap-1" aria-label="Frequency: Daily">
+          <Clock size={12} aria-hidden="true" />
           <span>Daily</span>
         </div>
       </div>

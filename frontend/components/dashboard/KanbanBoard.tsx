@@ -6,10 +6,11 @@ import {
   DragOverlay, 
   useSensor, 
   useSensors, 
-  MouseSensor, 
-  TouchSensor, 
-  DragEndEvent, 
-  DragStartEvent 
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
+  DragEndEvent,
+  DragStartEvent
 } from "@dnd-kit/core";
 import KanbanColumn from "@/components/dashboard/KanbanColumn";
 import QuestCard from "@/components/dashboard/QuestCard";
@@ -51,7 +52,8 @@ export default function KanbanBoard() {
         delay: 250,
         tolerance: 5,
       },
-    })
+    }),
+    useSensor(KeyboardSensor)
   );
 
   // Fetch Quests
@@ -126,12 +128,21 @@ export default function KanbanBoard() {
   }
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      onDragStart={handleDragStart} 
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      accessibility={{
+        screenReaderInstructions: {
+          draggable: 'To pick up a quest, press the space bar. While dragging, use the arrow keys to move the quest. Press space again to drop the quest in its new position, or press escape to cancel.',
+        }
+      }}
     >
-      <div className="flex gap-4 h-full min-w-max md:min-w-0">
+      <div
+        className="flex gap-4 h-full min-w-max md:min-w-0"
+        role="region"
+        aria-label="Quest Board"
+      >
         {COLUMNS.map(col => {
           const columnQuests = quests.filter(q => q.status === col.id);
           return (

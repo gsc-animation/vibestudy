@@ -5,6 +5,9 @@ export class MagnetsScene extends Scene {
     private graphics!: Phaser.GameObjects.Graphics;
     private showOverlay: boolean = false;
     private interactionEnabled: boolean = false;
+    
+    // Optimization: Reuse array to avoid GC
+    private magnetData: { x: number; y: number; pole: 'north' | 'south' }[] = [];
 
     constructor() {
         super('MagnetsScene');
@@ -114,34 +117,35 @@ export class MagnetsScene extends Scene {
     }
 
     private getMagnetData() {
-        // Return array of { x, y, pole } for each magnet pole
-        const magnetData: { x: number; y: number; pole: 'north' | 'south' }[] = [];
+        // Optimization: Reuse array array to avoid GC
+        // Reset array length but keep allocated memory if possible (JS arrays are dynamic anyway)
+        // But we want to reuse the objects inside if we can.
+        // For now, let's just rebuild the array but avoiding full recreation if we wanted to be super strict,
+        // but for < 10 items, just filling a persistent array is better than new Array().
+        
+        this.magnetData.length = 0;
         
         this.magnets.forEach(magnet => {
             const poles = magnet.getPoles();
-            magnetData.push({ x: poles.N.x, y: poles.N.y, pole: 'north' });
-            magnetData.push({ x: poles.S.x, y: poles.S.y, pole: 'south' });
+            this.magnetData.push({ x: poles.N.x, y: poles.N.y, pole: 'north' });
+            this.magnetData.push({ x: poles.S.x, y: poles.S.y, pole: 'south' });
         });
         
-        return magnetData;
+        return this.magnetData;
     }
 
     private drawForceVectors(m1: Magnet, m2: Magnet) {
         const poles1 = m1.getPoles();
         const poles2 = m2.getPoles();
 
-        // Pairs to visualize
-        const pairs = [
-            { p1: poles1.N, p2: poles2.N, color: 0xff0000 }, // Repel (Red)
-            { p1: poles1.S, p2: poles2.S, color: 0xff0000 }, // Repel (Red)
-            { p1: poles1.N, p2: poles2.S, color: 0x00ff00 }, // Attract (Green)
-            { p1: poles1.S, p2: poles2.N, color: 0x00ff00 }  // Attract (Green)
-        ];
+        // Unrolled to avoid object creation
+        this.graphics.lineStyle(2, 0xff0000, 0.6);
+        this.graphics.lineBetween(poles1.N.x, poles1.N.y, poles2.N.x, poles2.N.y); // N-N
+        this.graphics.lineBetween(poles1.S.x, poles1.S.y, poles2.S.x, poles2.S.y); // S-S
 
-        pairs.forEach(pair => {
-            this.graphics.lineStyle(2, pair.color, 0.6);
-            this.graphics.lineBetween(pair.p1.x, pair.p1.y, pair.p2.x, pair.p2.y);
-        });
+        this.graphics.lineStyle(2, 0x00ff00, 0.6);
+        this.graphics.lineBetween(poles1.N.x, poles1.N.y, poles2.S.x, poles2.S.y); // N-S
+        this.graphics.lineBetween(poles1.S.x, poles1.S.y, poles2.N.x, poles2.N.y); // S-N
     }
 
     private applyMagneticForces(m1: Magnet, m2: Magnet) {
@@ -158,27 +162,25 @@ export class MagnetsScene extends Scene {
         
         const forceStrength = 50000;
         const maxDist = 300;
+        const minDist = 10;
+        const maxDistSq = maxDist * maxDist;
+        const minDistSq = minDist * minDist;
 
-        const pairs = [
-            { p1: poles1.N, p2: poles2.N, type: 'repel' },
-            { p1: poles1.S, p2: poles2.S, type: 'repel' },
-            { p1: poles1.N, p2: poles2.S, type: 'attract' },
-            { p1: poles1.S, p2: poles2.N, type: 'attract' }
-        ];
-
-        pairs.forEach(pair => {
-            const dx = pair.p1.x - pair.p2.x;
-            const dy = pair.p1.y - pair.p2.y;
+        // Helper for force calculation
+        const addForce = (p1: {x: number, y: number}, p2: {x: number, y: number}, isAttract: boolean) => {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
             const distSq = dx * dx + dy * dy;
-            const dist = Math.sqrt(distSq);
 
-            if (dist < maxDist && dist > 10) {
+            if (distSq < maxDistSq && distSq > minDistSq) {
+                // Optimization: Use distSq for cutoff before sqrt
+                const dist = Math.sqrt(distSq);
                 const forceMag = forceStrength / distSq;
                 
                 let dirX = dx / dist;
                 let dirY = dy / dist;
 
-                if (pair.type === 'attract') {
+                if (isAttract) {
                     dirX = -dirX;
                     dirY = -dirY;
                 }
@@ -189,7 +191,13 @@ export class MagnetsScene extends Scene {
                 fx2 -= dirX * forceMag;
                 fy2 -= dirY * forceMag;
             }
-        });
+        };
+
+        // Unrolled calls
+        addForce(poles1.N, poles2.N, false); // Repel
+        addForce(poles1.S, poles2.S, false); // Repel
+        addForce(poles1.N, poles2.S, true);  // Attract
+        addForce(poles1.S, poles2.N, true);  // Attract
 
         body1.setAcceleration(fx1, fy1);
         body2.setAcceleration(fx2, fy2);
@@ -230,13 +238,26 @@ class Magnet extends Phaser.GameObjects.Container {
         this.setInteractive();
     }
 
+    // Optimization: Reusable pole objects to reduce GC
+    private poles = {
+        N: { x: 0, y: 0 },
+        S: { x: 0, y: 0 }
+    };
+
     getPoles() {
-        const nLocal = { x: -25, y: 0 };
-        const sLocal = { x: 25, y: 0 };
+        // Update reusable object instead of creating new ones
+        this.poles.N.x = this.x - 25;
+        this.poles.N.y = this.y;
+        this.poles.S.x = this.x + 25;
+        this.poles.S.y = this.y;
         
-        return {
-            N: { x: this.x + nLocal.x, y: this.y + nLocal.y },
-            S: { x: this.x + sLocal.x, y: this.y + sLocal.y }
-        };
+        return this.poles;
+    }
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    destroy(fromScene?: any) {
+        // Just call super.destroy, no magnets property on 'this' in Magnet class
+        // Container destroys children automatically when destroyed
+        super.destroy(fromScene);
     }
 }

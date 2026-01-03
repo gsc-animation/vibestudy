@@ -35,10 +35,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-blue-50">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-4 border-blue-200">
         <h1 className="text-3xl font-bold text-center text-blue-600 mb-6 font-comic">
-          Welcome Back! 🚀
+          Welcome Back! <span aria-hidden="true">🚀</span>
         </h1>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           <div>
             <label className="block text-gray-700 text-lg font-bold mb-2" htmlFor="email">
               Email Address
@@ -48,9 +48,11 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-blue-100 focus:border-blue-400 focus:outline-none text-lg transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-blue-100 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none text-lg transition-all"
               placeholder="super@hero.com"
               required
+              autoComplete="email"
+              aria-invalid={!!error}
             />
           </div>
 
@@ -63,14 +65,20 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-blue-100 focus:border-blue-400 focus:outline-none text-lg transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-blue-100 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none text-lg transition-all"
               placeholder="••••••••"
               required
+              autoComplete="current-password"
+              aria-invalid={!!error}
             />
           </div>
 
           {error && (
-            <div className="bg-red-100 border-2 border-red-400 text-red-700 px-4 py-3 rounded-xl relative" role="alert">
+            <div
+              className="bg-red-100 border-2 border-red-400 text-red-700 px-4 py-3 rounded-xl relative"
+              role="alert"
+              aria-live="polite"
+            >
               <span className="block sm:inline font-bold">{error}</span>
             </div>
           )}
