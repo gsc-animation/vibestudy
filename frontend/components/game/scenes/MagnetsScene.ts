@@ -43,6 +43,32 @@ export class MagnetsScene extends Scene {
                 (gameObject.body as Phaser.Physics.Arcade.Body).setVelocity(0);
             }
         });
+
+        this.createCompleteButton();
+    }
+
+    private createCompleteButton() {
+        const button = this.add.text(700, 550, 'Complete', {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#ffffff',
+            backgroundColor: '#22c55e',
+            padding: { x: 10, y: 5 }
+        })
+        .setInteractive({ useHandCursor: true })
+        .setScrollFactor(0); // Fix to camera
+
+        button.on('pointerdown', () => {
+            const onGameComplete = this.registry.get('onGameComplete');
+            if (onGameComplete) {
+                onGameComplete();
+            } else {
+                console.warn('onGameComplete callback not found in registry');
+            }
+        });
+
+        button.on('pointerover', () => button.setStyle({ backgroundColor: '#16a34a' }));
+        button.on('pointerout', () => button.setStyle({ backgroundColor: '#22c55e' }));
     }
 
     update() {

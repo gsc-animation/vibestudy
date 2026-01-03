@@ -7,11 +7,19 @@ import * as Phaser from 'phaser';
 
 interface PhaserGameProps {
     config?: Phaser.Types.Core.GameConfig;
+    onGameComplete?: () => void;
 }
 
-const PhaserGame: React.FC<PhaserGameProps> = ({ config }) => {
+const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete }) => {
     const gameRef = useRef<Phaser.Game | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Update registry when onGameComplete changes
+    useEffect(() => {
+        if (gameRef.current && onGameComplete) {
+            gameRef.current.registry.set('onGameComplete', onGameComplete);
+        }
+    }, [onGameComplete]);
 
     useEffect(() => {
         if (gameRef.current || !containerRef.current) return;
@@ -39,13 +47,18 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config }) => {
 
         gameRef.current = new Phaser.Game(defaultConfig);
 
+        // Initial set of registry
+        if (onGameComplete) {
+            gameRef.current.registry.set('onGameComplete', onGameComplete);
+        }
+
         return () => {
             if (gameRef.current) {
                 gameRef.current.destroy(true);
                 gameRef.current = null;
             }
         };
-    }, [config]);
+    }, [config]); // Removed onGameComplete from dependency array to prevent game re-creation
 
     return (
         <div 

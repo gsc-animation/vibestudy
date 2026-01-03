@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseModule } from './database/database.module';
 import { QuestsModule } from './quests/quests.module';
 import { ExperimentsModule } from './experiments/experiments.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ExperimentsModule } from './experiments/experiments.module';
     DatabaseModule,
     QuestsModule,
     ExperimentsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
