@@ -1,0 +1,1 @@
+This project contains a frontend and a backend application. They must be run in separate terminals.
