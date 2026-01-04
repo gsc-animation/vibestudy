@@ -20,6 +20,8 @@ interface LabNotebookProps {
     userId?: string;
     /** Quest ID for experiment logging */
     questId?: string;
+    /** Type of quest/lab to determine content */
+    questType?: 'magnets' | 'friction';
     /** Callback when experiment state changes */
     onPhaseChange?: (phase: ExperimentPhase) => void;
     /** Callback when experiment is complete */
@@ -27,14 +29,26 @@ interface LabNotebookProps {
 }
 
 // Sentence templates and options for each phase
-const PREDICTION_TEMPLATE = "I predict the magnets will {interaction}.";
-const PREDICTION_OPTIONS = {
+const MAGNETS_PREDICTION_TEMPLATE = "I predict the magnets will {interaction}.";
+const MAGNETS_PREDICTION_OPTIONS = {
     interaction: ['attract (pull together)', 'repel (push apart)', 'do nothing'],
 };
 
-const OBSERVATION_TEMPLATE = "I observed that the magnets {result}.";
-const OBSERVATION_OPTIONS = {
+const FRICTION_PREDICTION_TEMPLATE = "I predict the car will travel {distance} on the {surface} surface.";
+const FRICTION_PREDICTION_OPTIONS = {
+    distance: ['furthest', 'shortest', 'medium distance'],
+    surface: ['ice (smooth)', 'wood (medium)', 'sandpaper (rough)', 'carpet (soft)'],
+};
+
+const MAGNETS_OBSERVATION_TEMPLATE = "I observed that the magnets {result}.";
+const MAGNETS_OBSERVATION_OPTIONS = {
     result: ['pulled together', 'pushed apart', 'stayed still'],
+};
+
+const FRICTION_OBSERVATION_TEMPLATE = "I observed the car went {distance} on {surface}.";
+const FRICTION_OBSERVATION_OPTIONS = {
+    distance: ['furthest', 'shortest', 'medium distance'],
+    surface: ['ice', 'wood', 'sandpaper', 'carpet'],
 };
 
 /**
@@ -52,6 +66,7 @@ const OBSERVATION_OPTIONS = {
 const LabNotebook: React.FC<LabNotebookProps> = ({
     userId = 'demo-user',
     questId = 'magnets-quest-1',
+    questType,
     onPhaseChange,
     onExperimentComplete,
 }) => {
@@ -60,6 +75,16 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
     const [observationSentence, setObservationSentence] = useState<string | null>(null);
     const [currentClozeExercise, setCurrentClozeExercise] = useState<ClozeExercise | null>(null);
     const [unlockedBadge, setUnlockedBadge] = useState<Badge | null>(null);
+
+    // Determine quest type - prefer prop, fall back to ID check
+    const isFrictionQuest = questType === 'friction' || questId.includes('friction');
+    
+    // Select templates based on quest type
+    const predictionTemplate = isFrictionQuest ? FRICTION_PREDICTION_TEMPLATE : MAGNETS_PREDICTION_TEMPLATE;
+    const predictionOptions = isFrictionQuest ? FRICTION_PREDICTION_OPTIONS : MAGNETS_PREDICTION_OPTIONS;
+    
+    const observationTemplate = isFrictionQuest ? FRICTION_OBSERVATION_TEMPLATE : MAGNETS_OBSERVATION_TEMPLATE;
+    const observationOptions = isFrictionQuest ? FRICTION_OBSERVATION_OPTIONS : MAGNETS_OBSERVATION_OPTIONS;
 
     const handlePredictionChange = useCallback((sentence: string | null) => {
         setPredictionSentence(sentence);
@@ -116,8 +141,8 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
             });
 
             // Get a cloze exercise for the current quest type
-            const questType = questId.includes('magnet') ? 'magnets' : 'magnets'; // Default to magnets for now
-            const exercise = getExerciseForQuest(questType);
+            const type = isFrictionQuest ? 'friction' : 'magnets';
+            const exercise = getExerciseForQuest(type);
             setCurrentClozeExercise(exercise || null);
 
             setState(prev => ({
@@ -235,12 +260,14 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     <span aria-hidden="true">🔮</span> Make Your Prediction
                 </h3>
                 <p className="text-sm text-blue-700 mb-4">
-                    What do you think will happen when the magnets get close to each other?
-                    Complete the sentence below:
+                    {isFrictionQuest
+                        ? "How far do you think the car will go on different surfaces? Complete the sentence below:"
+                        : "What do you think will happen when the magnets get close to each other? Complete the sentence below:"
+                    }
                 </p>
                 <SentenceBuilder
-                    template={PREDICTION_TEMPLATE}
-                    options={PREDICTION_OPTIONS}
+                    template={predictionTemplate}
+                    options={predictionOptions}
                     onChange={handlePredictionChange}
                     disabled={state.isLoading}
                 />
@@ -311,8 +338,8 @@ const LabNotebook: React.FC<LabNotebookProps> = ({
                     What actually happened? Complete the sentence below:
                 </p>
                 <SentenceBuilder
-                    template={OBSERVATION_TEMPLATE}
-                    options={OBSERVATION_OPTIONS}
+                    template={observationTemplate}
+                    options={observationOptions}
                     onChange={handleObservationChange}
                     disabled={state.isLoading}
                 />

@@ -4,12 +4,15 @@ interface PredictionModalProps {
     isOpen: boolean;
     onSubmit: (prediction: string) => Promise<void>;
     isLoading?: boolean;
+    questType?: string;
 }
 
-const PredictionModal: React.FC<PredictionModalProps> = ({ isOpen, onSubmit, isLoading = false }) => {
+const PredictionModal: React.FC<PredictionModalProps> = ({ isOpen, onSubmit, isLoading = false, questType = 'magnets' }) => {
     const [prediction, setPrediction] = useState('');
 
     if (!isOpen) return null;
+
+    const isFriction = questType.includes('friction');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,14 +26,16 @@ const PredictionModal: React.FC<PredictionModalProps> = ({ isOpen, onSubmit, isL
             <div className="w-full max-w-lg p-6 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-4">Scientific Hypothesis</h2>
                 <p className="text-slate-300 mb-6">
-                    Before you begin the experiment, what do you think will happen? 
-                    Make a prediction about how the magnets will interact.
+                    {isFriction
+                        ? "Before you begin, what do you think will happen? Make a prediction about how far the car will go on different surfaces."
+                        : "Before you begin the experiment, what do you think will happen? Make a prediction about how the magnets will interact."
+                    }
                 </p>
                 
                 <form onSubmit={handleSubmit}>
                     <textarea
                         className="w-full h-32 p-4 mb-6 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        placeholder="I predict that..."
+                        placeholder={isFriction ? "I predict the car will..." : "I predict that..."}
                         value={prediction}
                         onChange={(e) => setPrediction(e.target.value)}
                         disabled={isLoading}

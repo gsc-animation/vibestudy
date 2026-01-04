@@ -39,6 +39,16 @@ function LabPageContent({ params }: LabPageProps) {
     const userId = session?.user?.email || 'demo-user';
     const questId = unwrappedParams.id;
 
+    // Determine lab type based on quest/experiment ID
+    const getLabType = (id: string): 'magnets' | 'friction' => {
+        if (id.includes('friction') || id === 'experiment-2' || id === 'car-on-surfaces') {
+            return 'friction';
+        }
+        return 'magnets';
+    };
+
+    const labType = getLabType(questId);
+
     // Handle phase changes from the LabNotebook
     const handlePhaseChange = useCallback((phase: ExperimentPhase) => {
         setExperimentPhase(phase);
@@ -72,6 +82,7 @@ function LabPageContent({ params }: LabPageProps) {
                 <LabNotebook
                     userId={userId}
                     questId={questId}
+                    questType={labType}
                     onPhaseChange={handlePhaseChange}
                     onExperimentComplete={handleExperimentComplete}
                 />
@@ -82,6 +93,7 @@ function LabPageContent({ params }: LabPageProps) {
                     config={gameConfig}
                     showOverlay={showOverlay}
                     interactionEnabled={experimentPhase === 'experiment'}
+                    labType={labType}
                 />
             ) : (
                 <div className="flex items-center justify-center w-full h-full text-slate-400">
@@ -107,7 +119,9 @@ function LabPageContent({ params }: LabPageProps) {
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
                     <div className="bg-purple-600 text-white px-4 py-2 rounded-full shadow-lg">
                         <p className="text-sm font-medium">
-                            🧪 Drag the magnets to test your prediction!
+                            {labType === 'friction'
+                                ? '🧪 Release the car to test your prediction!'
+                                : '🧪 Drag the magnets to test your prediction!'}
                         </p>
                     </div>
                 </div>

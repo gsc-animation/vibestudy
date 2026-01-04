@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from 'react';
 import { BootScene } from './scenes/BootScene';
 import { MagnetsScene } from './scenes/MagnetsScene';
 import { OverlayScene } from './scenes/OverlayScene';
+import { FrictionScene } from './scenes/FrictionScene';
+import { FrictionOverlayScene } from './scenes/FrictionOverlayScene';
 import * as Phaser from 'phaser';
 
 interface PhaserGameProps {
@@ -11,9 +13,16 @@ interface PhaserGameProps {
     onGameComplete?: () => void;
     showOverlay?: boolean;
     interactionEnabled?: boolean;
+    labType?: 'magnets' | 'friction';
 }
 
-const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOverlay = false, interactionEnabled = false }) => {
+const PhaserGame: React.FC<PhaserGameProps> = ({
+    config,
+    onGameComplete,
+    showOverlay = false,
+    interactionEnabled = false,
+    labType = 'magnets'
+}) => {
     const gameRef = useRef<Phaser.Game | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +69,9 @@ const PhaserGame: React.FC<PhaserGameProps> = ({ config, onGameComplete, showOve
                     // debug: true
                 }
             },
-            scene: [MagnetsScene, BootScene, OverlayScene],
+            scene: labType === 'friction'
+                ? [FrictionScene, BootScene, FrictionOverlayScene]
+                : [MagnetsScene, BootScene, OverlayScene],
             ...config
         };
 

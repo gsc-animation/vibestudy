@@ -4,12 +4,13 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Sword,
   Shield,
-  Book, 
-  Zap, 
+  Book,
+  Zap,
   Trophy,
   Clock,
   MoreHorizontal
 } from "lucide-react";
+import Link from "next/link";
 
 interface Quest {
   _id: string;
@@ -93,14 +94,16 @@ export default function QuestCard({ quest }: QuestCardProps) {
       </div>
 
       {/* Quest Title & Icon */}
-      <div className="flex items-start gap-2 mb-3">
-        <div className="mt-0.5 p-1.5 bg-slate-100 text-slate-500 rounded-md" aria-hidden="true">
-          {getQuestIcon(quest.category)}
+      <Link href={`/lab/${quest._id}`} className="block">
+        <div className="flex items-start gap-2 mb-3 hover:bg-slate-50 rounded p-1 transition-colors -mx-1">
+          <div className="mt-0.5 p-1.5 bg-slate-100 text-slate-500 rounded-md" aria-hidden="true">
+            {getQuestIcon(quest.category)}
+          </div>
+          <h4 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-2">
+            {quest.title}
+          </h4>
         </div>
-        <h4 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-2">
-          {quest.title}
-        </h4>
-      </div>
+      </Link>
 
       {/* Footer: Rewards & Info */}
       <div className="flex items-center justify-between text-xs text-slate-500 border-t pt-2 mt-2">

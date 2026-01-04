@@ -4,12 +4,15 @@ interface ReflectionModalProps {
     isOpen: boolean;
     onSubmit: (observation: string) => Promise<void>;
     isLoading?: boolean;
+    questType?: string;
 }
 
-const ReflectionModal: React.FC<ReflectionModalProps> = ({ isOpen, onSubmit, isLoading = false }) => {
+const ReflectionModal: React.FC<ReflectionModalProps> = ({ isOpen, onSubmit, isLoading = false, questType = 'magnets' }) => {
     const [observation, setObservation] = useState('');
 
     if (!isOpen) return null;
+
+    const isFriction = questType.includes('friction');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,14 +26,16 @@ const ReflectionModal: React.FC<ReflectionModalProps> = ({ isOpen, onSubmit, isL
             <div className="w-full max-w-lg p-6 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-4">Experiment Complete!</h2>
                 <p className="text-slate-300 mb-6">
-                    Great job! Now, reflect on what you observed. 
-                    Did the results match your prediction?
+                    {isFriction
+                        ? "Great job! Now, reflect on what you observed. How did the surface affect the distance the car traveled?"
+                        : "Great job! Now, reflect on what you observed. Did the results match your prediction?"
+                    }
                 </p>
                 
                 <form onSubmit={handleSubmit}>
                     <textarea
                         className="w-full h-32 p-4 mb-6 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                        placeholder="I observed that..."
+                        placeholder={isFriction ? "I noticed the car went..." : "I observed that..."}
                         value={observation}
                         onChange={(e) => setObservation(e.target.value)}
                         disabled={isLoading}
