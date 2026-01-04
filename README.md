@@ -62,6 +62,22 @@ Open two terminal windows/tabs.
 
 Open your browser and navigate to `http://localhost:3000`.
 
+## Production Deployment
+
+To run the application in a production-like environment using Docker Compose:
+
+1.  **Run with Docker Compose**:
+    ```bash
+    docker compose -f compose.prod.yaml up -d --build
+    ```
+    This command builds the optimized production images (multi-stage builds) and orchestrates the containers.
+
+2.  **Health Checks**:
+    The system includes health check endpoints used by Docker Compose to ensure services are ready:
+    *   **Backend**: `http://localhost:3001/api/health`
+    *   **Frontend**: `http://localhost:3000/api/health`
+    *   **MongoDB**: Internal ping check.
+
 ## Demo Script
 
 For a guided tour of the MVP features, please refer to [MVP_DEMO_SCRIPT.md](./MVP_DEMO_SCRIPT.md).

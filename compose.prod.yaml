@@ -1,0 +1,87 @@
+# Docker Compose configuration for VibeStudy PRODUCTION environment
+name: vibestudy-prod
+
+services:
+  # MongoDB Database Service
+  mongodb:
+    image: mongo:7
+    container_name: vibestudy-mongo-prod
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_prod:/data/db
+      - mongodb_config_prod:/data/configdb
+    environment:
+      # In production, these should be set via .env file or secrets
+      MONGO_INITDB_DATABASE: vibestudy
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    networks:
+      - vibestudy-network-prod
+
+  # Backend Service (NestJS)
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: vibestudy-backend-prod
+    ports:
+      - "3001:3001"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/vibestudy
+      PORT: 3001
+      # NODE_ENV is set to production in Dockerfile
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: always
+    networks:
+      - vibestudy-network-prod
+
+  # Frontend Service (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      target: runner
+    container_name: vibestudy-frontend-prod
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/vibestudy
+      NEXTAUTH_URL: http://localhost:3000
+      BACKEND_URL: http://backend:3001
+      # NODE_ENV is set to production in Dockerfile
+    depends_on:
+      - backend
+      - mongodb
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: always
+    networks:
+      - vibestudy-network-prod
+
+volumes:
+  mongodb_data_prod:
+    name: vibestudy-mongodb-data-prod
+  mongodb_config_prod:
+    name: vibestudy-mongodb-config-prod
+
+networks:
+  vibestudy-network-prod:
+    name: vibestudy-network-prod
+    driver: bridge
