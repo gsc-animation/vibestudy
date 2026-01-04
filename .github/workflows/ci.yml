@@ -1,0 +1,101 @@
+name: VibeStudy CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      
+      # Install Backend
+      - name: Install Backend Dependencies
+        run: npm ci
+        working-directory: ./backend
+      
+      # Install Frontend
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      # Linting
+      - name: Backend Lint
+        run: npm run lint
+        working-directory: ./backend
+      - name: Frontend Lint
+        run: npm run lint
+        working-directory: ./frontend
+        
+      # Type Checking
+      - name: Backend Type Check
+        run: npx tsc --noEmit
+        working-directory: ./backend
+      - name: Frontend Type Check
+        run: npx tsc --noEmit
+        working-directory: ./frontend
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      
+      - name: Install Backend Dependencies
+        run: npm ci
+        working-directory: ./backend
+      
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Backend Tests
+        run: npm run test
+        working-directory: ./backend
+      
+      - name: Frontend Tests
+        run: npm run test
+        working-directory: ./frontend
+
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      
+      - name: Install Backend Dependencies
+        run: npm ci
+        working-directory: ./backend
+      
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Backend Build
+        run: npm run build
+        working-directory: ./backend
+      
+      - name: Frontend Build
+        run: npm run build
+        working-directory: ./frontend

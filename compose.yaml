@@ -47,6 +47,53 @@ services:
     profiles:
       - admin  # Only start with: docker compose --profile admin up
 
+  # Backend Service (NestJS)
+  backend:
+    build:
+      context: ./backend
+      target: development # Use development target for hot reload or debugging in dev env, 'production' for prod
+    container_name: vibestudy-backend
+    command: npm run start:dev
+    ports:
+      - "3001:3001"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/vibestudy
+      PORT: 3001
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-mock-key}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vibestudy-network
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  # Frontend Service (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      target: deps # Use deps target to get cached node_modules
+    container_name: vibestudy-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/vibestudy
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-supersecret}
+      BACKEND_URL: http://backend:3001
+    depends_on:
+      - backend
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - vibestudy-network
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
 volumes:
   mongodb_data:
     name: vibestudy-mongodb-data

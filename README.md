@@ -7,6 +7,21 @@ This project is an educational platform (MVP) featuring a Kanban-style quest boa
 - **Node.js** (v18+ recommended)
 - **MongoDB**: Must be installed and running locally on port `27017` (or configured in `.env`).
 
+## Environment Configuration
+
+Before running the application, ensure your environment variables are set up.
+
+### Backend
+1. Copy the example file: `cp backend/.env.production.example backend/.env`
+2. Update the values in `backend/.env`:
+   - `MONGO_URI`: Your MongoDB connection string.
+   - `OPENAI_API_KEY`: Your OpenAI API key for AI features.
+
+### Frontend
+1. Copy the example file: `cp frontend/.env.production.example frontend/.env.local`
+2. Update the values in `frontend/.env.local`:
+   - `NEXT_PUBLIC_API_URL`: URL of the backend API (default: `http://localhost:3001`).
+
 ## How to Run MVP
 
 Open two terminal windows/tabs.
